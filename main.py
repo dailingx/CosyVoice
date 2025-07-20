@@ -16,7 +16,7 @@ import argparse
 # 创建FastAPI应用实例
 app = FastAPI()
 
-# cosyvoice = CosyVoice2('pretrained_models/CosyVoice2-0.5B', load_jit=True, load_trt=True, load_vllm=True, fp16=True)
+cosyvoice = CosyVoice2('pretrained_models/CosyVoice2-0.5B', load_jit=True, load_trt=True, load_vllm=True, fp16=True)
 
 
 # 定义处理POST请求的接口
@@ -27,9 +27,9 @@ async def vllm_tts(request: Request):
     tts_text = data.text
     prompt_speech_16k = load_wav('./asset/zero_shot_prompt.wav', 16000)
     set_all_random_seed(123)
-    # cosyvoice.inference_zero_shot(
-    #         tts_text,
-    #         '希望你以后能够做的比我还好呦。', prompt_speech_16k, stream=False)
+    cosyvoice.inference_zero_shot(
+            tts_text,
+            '希望你以后能够做的比我还好呦。', prompt_speech_16k, stream=False)
     logging.info(f"tts success, tts text: {tts_text}")
     # 为了演示，这里直接返回处理结果
     return {
@@ -37,7 +37,7 @@ async def vllm_tts(request: Request):
     }
 
 # 主函数，用来创建应用实例并运行
-def main():
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, help="服务端口", required=True)
     args = parser.parse_args()
