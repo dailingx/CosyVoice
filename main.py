@@ -23,10 +23,9 @@ cosyvoice = CosyVoice2('pretrained_models/CosyVoice2-0.5B', load_jit=True, load_
 @app.post("/vllm/tts")
 async def vllm_tts(request: Request):
     # 获取原始请求的 JSON 数据
-    body = await request.body()
     data = await request.json()
-    logging.info(f"request: {body}, {data}")
-    tts_text = body.text
+    logging.info(f"request: {data}")
+    tts_text = data['text']
     prompt_speech_16k = load_wav('./asset/zero_shot_prompt.wav', 16000)
     set_all_random_seed(123)
     cosyvoice.inference_zero_shot(
