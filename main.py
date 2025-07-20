@@ -18,11 +18,6 @@ app = FastAPI()
 
 cosyvoice = CosyVoice2('pretrained_models/CosyVoice2-0.5B', load_jit=True, load_trt=True, load_vllm=True, fp16=True)
 
-# 在项目启动时会先执行
-@app.on_event("startup")
-async def preload_model():
-    if cosyvoice is not None:
-        logging.info("preload_model success.")
 
 # 定义处理POST请求的接口
 @app.post("/vllm/tts")
