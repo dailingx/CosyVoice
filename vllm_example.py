@@ -8,11 +8,12 @@ from cosyvoice.cli.cosyvoice import CosyVoice2
 from cosyvoice.utils.file_utils import load_wav
 from cosyvoice.utils.common import set_all_random_seed
 from tqdm import tqdm
+from cosyvoice.utils.file_utils import logging
 
 
 def main():
     cosyvoice = CosyVoice2('pretrained_models/CosyVoice2-0.5B', load_jit=True, load_trt=True, load_vllm=True, fp16=True)
-    print("load CosyVoice2 success.")
+    logging.info("load CosyVoice2 success.")
     prompt_speech_16k = load_wav('./asset/zero_shot_prompt.wav', 16000)
     # for i in tqdm(range(100)):
     #     set_all_random_seed(i)
