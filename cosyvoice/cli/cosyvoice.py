@@ -90,6 +90,7 @@ class CosyVoice:
                 start_time = time.time()
 
     def inference_zero_shot(self, tts_text, prompt_text, prompt_speech_16k, zero_shot_spk_id='', stream=False, speed=1.0, text_frontend=True):
+        print("begin process")
         prompt_text = self.frontend.text_normalize(prompt_text, split=False, text_frontend=text_frontend)
         logging.info('begin zero shot')
         for i in tqdm(self.frontend.text_normalize(tts_text, split=True, text_frontend=text_frontend)):
