@@ -27,10 +27,10 @@ async def vllm_tts(request: Request):
     tts_text = data['text']
     prompt_speech_16k = load_wav('./asset/zero_shot_prompt.wav', 16000)
     set_all_random_seed(123)
-    cosyvoice.inference_zero_shot(
+    tts_result = cosyvoice.inference_zero_shot(
             tts_text,
             '希望你以后能够做的比我还好呦。', prompt_speech_16k, stream=False)
-    logging.info(f"tts success, tts text: {tts_text}")
+    logging.info(f"tts success, tts text: {tts_text}, result: {tts_result}")
     # 为了演示，这里直接返回处理结果
     return {
         "status": "success"
