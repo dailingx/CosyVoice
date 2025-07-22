@@ -64,9 +64,11 @@ async def vllm_tts(request: Request):
     ))
     if results:
         all_audio = torch.cat([j['tts_speech'] for j in results], dim=-1)
+        output_dir = os.path.join(os.getcwd(), "output")
         filename = f"sft_instruct_{str(uuid.uuid4()).replace('-', '')}.wav"
-        torchaudio.save(filename, all_audio, cosyvoice.sample_rate)
-        abs_path = os.path.abspath(filename)
+        file_path = os.path.join(output_dir, filename)
+        torchaudio.save(file_path, all_audio, cosyvoice.sample_rate)
+        abs_path = os.path.abspath(file_path)
         logging.info(f"音频已保存，绝对路径为: {abs_path}")
         # 获取端口号
         port = app.state.port if hasattr(app.state, 'port') else None
