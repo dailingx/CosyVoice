@@ -68,15 +68,13 @@ async def vllm_tts(request: Request):
         filename = f"sft_instruct_{str(uuid.uuid4()).replace('-', '')}.wav"
         file_path = os.path.join(output_dir, filename)
         torchaudio.save(file_path, all_audio, cosyvoice.sample_rate)
-        abs_path = os.path.abspath(file_path)
-        logging.info(f"音频已保存，绝对路径为: {abs_path}")
+        file_abs_path = os.path.abspath(file_path)
         # 获取端口号
         port = app.state.port if hasattr(app.state, 'port') else None
-        async_task_callback(task_id, True, abs_path, 0, port)
+        async_task_callback(task_id, True, file_abs_path, 0, port)
     logging.info(f"tts success, task_id: {task_id}, tts text: {tts_text}")
     return {
         "status": "success",
-        "file_path": abs_path if results else None
     }
 
 # 主函数，用来创建应用实例并运行
