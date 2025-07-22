@@ -22,7 +22,7 @@ app = FastAPI()
 
 # cosyvoice = CosyVoice2('pretrained_models/CosyVoice2-0.5B', load_jit=True, load_trt=True, load_vllm=True, fp16=True)
 cosyvoice = CosyVoice2('pretrained_models/CosyVoice2-0.5B', load_jit=False, load_trt=False, load_vllm=False, fp16=False)
-spk_emb_dict = torch.load('spk2embedding.pt', map_location='cpu')
+spk_emb_dict = torch.load('pretrained_models/CosyVoice2-0.5B/spk2embedding.pt', map_location='cpu')
 prompt_speech_16k = load_wav('./asset/spk12649899906_00157.wav', 16000)
 
 # 定义处理POST请求的接口
@@ -31,6 +31,7 @@ async def vllm_tts(request: Request):
     data = await request.json()
     tts_text = data['text']
     spk_id = data['speakerId']
+    task_id = data['taskId']
     results = list(cosyvoice.inference_sft_peng(
         tts_text, spk_id, prompt_speech_16k, spk_emb_dict[spk_id], stream=False
     ))
@@ -40,7 +41,7 @@ async def vllm_tts(request: Request):
         torchaudio.save(filename, all_audio, cosyvoice.sample_rate)
         abs_path = os.path.abspath(filename)
         logging.info(f"音频已保存，绝对路径为: {abs_path}")
-    logging.info(f"tts success, tts text: {tts_text}")
+    logging.info(f"tts success, task_id: {task_id}, tts text: {tts_text}")
     return {
         "status": "success",
         "file_path": abs_path if results else None

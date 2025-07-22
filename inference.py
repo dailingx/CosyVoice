@@ -35,7 +35,7 @@ prompt_speech_16k = load_wav('./asset/spk12649899906_00157.wav', 16000)
 
 
 
-spk_emb_dict = torch.load('spk2embedding.pt', map_location='cpu')
+spk_emb_dict = torch.load('pretrained_models/CosyVoice2-0.5Bspk2embedding.pt', map_location='cpu')
 spk_id = 'spk12649899906'
 
 
