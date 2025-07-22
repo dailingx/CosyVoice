@@ -16,6 +16,11 @@ from cosyvoice.utils.file_utils import logging
 import argparse
 import os
 
+from pathlib import Path
+proxy_project_path = Path("/home/workspace/music-content-ai-generate-proxy")
+sys.path.append(str(proxy_project_path))
+from services.status_callback import task_callback
+
 
 # 创建FastAPI应用实例
 app = FastAPI()
@@ -24,6 +29,28 @@ app = FastAPI()
 cosyvoice = CosyVoice2('pretrained_models/CosyVoice2-0.5B', load_jit=False, load_trt=False, load_vllm=False, fp16=False)
 spk_emb_dict = torch.load('pretrained_models/CosyVoice2-0.5B/spk2embedding.pt', map_location='cpu')
 prompt_speech_16k = load_wav('./asset/spk12649899906_00157.wav', 16000)
+
+
+def async_task_callback(task_id, success, file_path, execution_time):
+    try:
+        status = "TASK_SUCCESS" if success else 'TASK_FAIL'
+        data = {
+            "outputs": {
+                "audio": [
+                    {
+                        "file_path": file_path
+                    }
+                ]
+            },
+            "status": {
+                "status_str": "success"
+            }
+        }
+        gpu_uuid = task_callback(task_id, status, data, execution_time)
+        logging.info(f"Task Callback completed, task_id: {task_id}, status: {status}, gpu_uuid: {gpu_uuid}")
+    except Exception as e:
+        logging.error(f"Traceback status callback error when task finish, task_id: {task_id}, e: {str(e)}")
+
 
 # 定义处理POST请求的接口
 @app.post("/vllm/tts")
@@ -41,6 +68,7 @@ async def vllm_tts(request: Request):
         torchaudio.save(filename, all_audio, cosyvoice.sample_rate)
         abs_path = os.path.abspath(filename)
         logging.info(f"音频已保存，绝对路径为: {abs_path}")
+        async_task_callback(task_id, True, abs_path, 0)
     logging.info(f"tts success, task_id: {task_id}, tts text: {tts_text}")
     return {
         "status": "success",
