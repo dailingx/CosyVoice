@@ -25,8 +25,8 @@ from services.status_callback import task_callback
 # 创建FastAPI应用实例
 app = FastAPI()
 
-# cosyvoice = CosyVoice2('pretrained_models/CosyVoice2-0.5B', load_jit=True, load_trt=True, load_vllm=True, fp16=True)
-cosyvoice = CosyVoice2('pretrained_models/CosyVoice2-0.5B', load_jit=False, load_trt=False, load_vllm=False, fp16=False)
+cosyvoice = CosyVoice2('pretrained_models/CosyVoice2-0.5B', load_jit=True, load_trt=True, load_vllm=True, fp16=True)
+# cosyvoice = CosyVoice2('pretrained_models/CosyVoice2-0.5B', load_jit=False, load_trt=False, load_vllm=False, fp16=False)
 spk_emb_dict = torch.load('pretrained_models/CosyVoice2-0.5B/spk2embedding.pt', map_location='cpu')
 prompt_speech_16k = load_wav('./asset/spk12649899906_00157.wav', 16000)
 
