@@ -14,6 +14,7 @@ from cosyvoice.utils.file_utils import load_wav
 from cosyvoice.utils.common import set_all_random_seed
 from cosyvoice.utils.file_utils import logging
 import argparse
+import os
 
 
 # 创建FastAPI应用实例
@@ -33,14 +34,16 @@ async def vllm_tts(request: Request):
     results = list(cosyvoice.inference_sft_peng(
         tts_text, spk_id, prompt_speech_16k, spk_emb_dict[spk_id], stream=False
     ))
-    # 假设每个j['tts_speech']是一个Tensor，拼接所有片段
     if results:
         all_audio = torch.cat([j['tts_speech'] for j in results], dim=-1)
         filename = f"sft_instruct_{str(uuid.uuid4()).replace('-', '')}.wav"
         torchaudio.save(filename, all_audio, cosyvoice.sample_rate)
+        abs_path = os.path.abspath(filename)
+        logging.info(f"音频已保存，绝对路径为: {abs_path}")
     logging.info(f"tts success, tts text: {tts_text}")
     return {
-        "status": "success"
+        "status": "success",
+        "file_path": abs_path if results else None
     }
 
 # 主函数，用来创建应用实例并运行
