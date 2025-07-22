@@ -31,7 +31,7 @@ spk_emb_dict = torch.load('pretrained_models/CosyVoice2-0.5B/spk2embedding.pt', 
 prompt_speech_16k = load_wav('./asset/spk12649899906_00157.wav', 16000)
 
 
-def async_task_callback(task_id, success, file_path, execution_time):
+def async_task_callback(task_id, success, file_path, execution_time, port):
     try:
         status = "TASK_SUCCESS" if success else 'TASK_FAIL'
         data = {
@@ -46,7 +46,7 @@ def async_task_callback(task_id, success, file_path, execution_time):
                 "status_str": "success"
             }
         }
-        gpu_uuid = task_callback(task_id, status, data, execution_time)
+        gpu_uuid = task_callback(task_id, status, data, execution_time, port)
         logging.info(f"Task Callback completed, task_id: {task_id}, status: {status}, gpu_uuid: {gpu_uuid}")
     except Exception as e:
         logging.error(f"Traceback status callback error when task finish, task_id: {task_id}, e: {str(e)}")
@@ -68,7 +68,9 @@ async def vllm_tts(request: Request):
         torchaudio.save(filename, all_audio, cosyvoice.sample_rate)
         abs_path = os.path.abspath(filename)
         logging.info(f"音频已保存，绝对路径为: {abs_path}")
-        async_task_callback(task_id, True, abs_path, 0)
+        # 获取端口号
+        port = app.state.port if hasattr(app.state, 'port') else None
+        async_task_callback(task_id, True, abs_path, 0, port)
     logging.info(f"tts success, task_id: {task_id}, tts text: {tts_text}")
     return {
         "status": "success",
@@ -80,6 +82,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, help="服务端口", required=True)
     args = parser.parse_args()
+
+    # 保存端口到app.state，方便后续调用
+    app.state.port = args.port
 
     import uvicorn
     uvicorn.run(
