@@ -90,11 +90,7 @@ class CosyVoice:
                 start_time = time.time()
 
     def inference_zero_shot(self, tts_text, prompt_text, prompt_speech_16k, zero_shot_spk_id='', stream=False, speed=1.0, text_frontend=True):
-        print("begin process")
-        # if tts_text is not None:
-        #     return tts_text
         prompt_text = self.frontend.text_normalize(prompt_text, split=False, text_frontend=text_frontend)
-        logging.info('begin zero shot')
         for i in tqdm(self.frontend.text_normalize(tts_text, split=True, text_frontend=text_frontend)):
             if (not isinstance(i, Generator)) and len(i) < 0.5 * len(prompt_text):
                 logging.warning('synthesis text {} too short than prompt text {}, this may lead to bad performance'.format(i, prompt_text))
@@ -192,6 +188,19 @@ class CosyVoice2(CosyVoice):
         assert isinstance(self.model, CosyVoice2Model), 'inference_instruct2 is only implemented for CosyVoice2!'
         for i in tqdm(self.frontend.text_normalize(tts_text, split=True, text_frontend=text_frontend)):
             model_input = self.frontend.frontend_instruct2(i, instruct_text, prompt_speech_16k, self.sample_rate, zero_shot_spk_id)
+            start_time = time.time()
+            logging.info('synthesis text {}'.format(i))
+            for model_output in self.model.tts(**model_input, stream=stream, speed=speed):
+                speech_len = model_output['tts_speech'].shape[1] / self.sample_rate
+                logging.info('yield speech len {}, rtf {}'.format(speech_len, (time.time() - start_time) / speech_len))
+                yield model_output
+                start_time = time.time()
+
+    def inference_sft_peng(self, tts_text, spk_id, prompt_speech_16k, spk_emb, stream=False, speed=1.0,
+                           text_frontend=True):
+        assert isinstance(self.model, CosyVoice2Model), 'inference_sft_peng is only implemented for CosyVoice2!'
+        for i in tqdm(self.frontend.text_normalize(tts_text, split=True, text_frontend=text_frontend)):
+            model_input = self.frontend.frontend_sft_peng(i, spk_id, prompt_speech_16k, self.sample_rate, spk_emb)
             start_time = time.time()
             logging.info('synthesis text {}'.format(i))
             for model_output in self.model.tts(**model_input, stream=stream, speed=speed):
