@@ -15,6 +15,7 @@ from cosyvoice.utils.common import set_all_random_seed
 from cosyvoice.utils.file_utils import logging
 import argparse
 import os
+import time
 
 from pathlib import Path
 proxy_project_path = Path("/home/workspace/music-content-ai-generate-proxy")
@@ -56,6 +57,7 @@ def async_task_callback(task_id, success, file_path, execution_time, port):
 # 定义处理POST请求的接口
 @app.post("/vllm/tts")
 async def vllm_tts(request: Request):
+    start_time = time.time()
     data = await request.json()
     tts_text = data['text']
     spk_id = data['speakerId']
@@ -73,12 +75,14 @@ async def vllm_tts(request: Request):
         file_abs_path = os.path.abspath(file_path)
         # 获取端口号
         port = app.state.port if hasattr(app.state, 'port') else None
-        logging.info(f"vllm tts success, task_id: {task_id}, tts text: {tts_text}")
+        execution_time = (time.time() - start_time) * 1000
+        logging.info(f"vllm tts success, task_id: {task_id}, tts text: {tts_text}, execution time: {execution_time}")
         if is_sync:
             upload_result = upload_local_file_to_nos(file_abs_path)
             return {
                 "status": "success",
-                "fileNos": upload_result['fileNos']
+                "fileNos": upload_result['fileNos'],
+                "executionTime": execution_time
             }
         else:
             async_task_callback(task_id, True, file_abs_path, 0, port)
