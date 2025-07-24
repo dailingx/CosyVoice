@@ -20,6 +20,7 @@ from pathlib import Path
 proxy_project_path = Path("/home/workspace/music-content-ai-generate-proxy")
 sys.path.append(str(proxy_project_path))
 from services.status_callback import task_callback
+from services.status_callback import upload_local_file_to_nos
 
 
 # 创建FastAPI应用实例
@@ -59,6 +60,7 @@ async def vllm_tts(request: Request):
     tts_text = data['text']
     spk_id = data['speakerId']
     task_id = data['taskId']
+    is_sync = data['isSync']
     results = list(cosyvoice.inference_sft_peng(
         tts_text, spk_id, prompt_speech_16k, spk_emb_dict[spk_id], stream=False
     ))
@@ -71,11 +73,18 @@ async def vllm_tts(request: Request):
         file_abs_path = os.path.abspath(file_path)
         # 获取端口号
         port = app.state.port if hasattr(app.state, 'port') else None
-        async_task_callback(task_id, True, file_abs_path, 0, port)
-    logging.info(f"tts success, task_id: {task_id}, tts text: {tts_text}")
-    return {
-        "status": "success",
-    }
+        logging.info(f"vllm tts success, task_id: {task_id}, tts text: {tts_text}")
+        if is_sync:
+            upload_result = upload_local_file_to_nos(file_abs_path)
+            return {
+                "status": "success",
+                "fileNos": upload_result['fileNos']
+            }
+        else:
+            async_task_callback(task_id, True, file_abs_path, 0, port)
+            return {
+                "status": "success",
+            }
 
 # 主函数，用来创建应用实例并运行
 if __name__ == "__main__":
