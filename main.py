@@ -30,8 +30,8 @@ app = FastAPI()
 cosyvoice = CosyVoice2('/home/workspace/CosyVoice/pretrained_models/CosyVoice2-0.5B', load_jit=True, load_trt=True, load_vllm=True, fp16=True)
 # cosyvoice = CosyVoice2('/home/workspace/CosyVoice/pretrained_models/CosyVoice2-0.5B', load_jit=False, load_trt=False, load_vllm=False, fp16=False)
 spk_emb_dict = torch.load('/home/workspace/CosyVoice/pretrained_models/CosyVoice2-0.5B/spk2embedding.pt', map_location='cpu')
-prompt_speech_16k = load_wav('./asset/spk12649899906_00157.wav', 16000)
-
+# prompt_speech_16k = load_wav('./asset/spk12649899906_00157.wav', 16000)
+prompt_speech_16k = load_wav('./asset/spk302346072_00060.wav', 16000)
 
 def async_task_callback(task_id, success, file_path, execution_time, port):
     try:
@@ -82,6 +82,7 @@ async def vllm_tts(request: Request):
             return {
                 "status": "success",
                 "fileNos": upload_result['fileNos'],
+                "duration": upload_result['duration'],
                 "executionTime": execution_time
             }
         else:
