@@ -2,8 +2,8 @@
 # Copyright 2024 Alibaba Inc. All Rights Reserved.
 . ./path.sh || exit 1;
 
-stage=-1
-stop_stage=3
+stage=7
+stop_stage=7
 
 data_url=www.openslr.org/resources/60
 data_dir=/mnt/lyuxiang.lx/data/tts/openslr/libritts
@@ -106,6 +106,6 @@ fi
 
 if [ ${stage} -le 7 ] && [ ${stop_stage} -ge 7 ]; then
   echo "Export your model for inference speedup. Remember copy your llm or flow model to model_dir"
-  python cosyvoice/bin/export_jit.py --model_dir $pretrained_model_dir
-  python cosyvoice/bin/export_onnx.py --model_dir $pretrained_model_dir
+  python3 cosyvoice/bin/export_jit.py --model_dir $pretrained_model_dir
+  python3 cosyvoice/bin/export_onnx.py --model_dir $pretrained_model_dir
 fi
