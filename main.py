@@ -87,8 +87,8 @@ async def vllm_tts(request: Request):
     spk_id = data['speakerId']
     task_id = data['taskId']
     is_sync = data['isSync']
-    output_nos_endpoint = data['outputNosEndpoint']
-    output_nos_bucket = data['outputNosBucket']
+    output_nos_endpoint = data.get('outputNosEndpoint', None)
+    output_nos_bucket = data.get('outputNosBucket', None)
     results = list(cosyvoice.inference_sft_peng(
         tts_text, spk_id, prompt_speech_16k, spk_emb_dict[spk_id], stream=False
     ))
