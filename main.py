@@ -33,7 +33,7 @@ spk_emb_dict = None
 prompt_speech_16k = None
 
 
-def initialize_cosyvoice(use_vllm=True):
+def initialize_cosyvoice(no_vllm=False):
     """初始化 CosyVoice2 实例"""
     global cosyvoice, spk_emb_dict, prompt_speech_16k
     
@@ -43,7 +43,7 @@ def initialize_cosyvoice(use_vllm=True):
     load_vllm = True
     fp16 = True
     
-    if not use_vllm:
+    if no_vllm:
         load_jit = not load_jit
         load_trt = not load_trt
         load_vllm = not load_vllm
@@ -54,7 +54,7 @@ def initialize_cosyvoice(use_vllm=True):
     spk_emb_dict = torch.load('/home/workspace/CosyVoice/pretrained_models/CosyVoice2-0.5B/spk2embedding.pt', map_location='cpu')
     # prompt_speech_16k = load_wav('./asset/spk12649899906_00157.wav', 16000)
     prompt_speech_16k = load_wav('./asset/spk302346072_00060.wav', 16000)
-    logging.info(f"initialize cosyvoice2 success, use_vllm: {use_vllm}")
+    logging.info(f"initialize cosyvoice2 success, use_vllm: {not no_vllm}")
 
 
 def async_task_callback(task_id, success, file_path, execution_time, port):
@@ -175,15 +175,15 @@ async def vllm_zero_shot(request: Request):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=8190, help="服务端口")
-    parser.add_argument("--use_vllm", action="store_true", default=True, help="是否使用vLLM")
+    parser.add_argument("--no_vllm", action="store_true", help="不使用vLLM")
     args = parser.parse_args()
 
     # 保存端口到app.state，方便后续调用
     app.state.port = args.port
 
-    logging.info(f"get use-llm: {args.use_vllm}")
+    logging.info(f"get use-llm: {args.no_vllm}")
     # 初始化 CosyVoice2 实例
-    initialize_cosyvoice(args.use_vllm)
+    initialize_cosyvoice(args.no_vllm)
 
     import uvicorn
     uvicorn.run(
