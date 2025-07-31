@@ -128,6 +128,8 @@ async def vllm_zero_shot(request: Request):
     spk_text = data['speakerText']
     task_id = data['taskId']
     is_sync = data['isSync']
+    output_nos_endpoint = data.get('outputNosEndpoint', None)
+    output_nos_bucket = data.get('outputNosBucket', None)
     # 判断spk_id是否在spk2info中
     if spk_id in cosyvoice.frontend.spk2info:
         results = list(cosyvoice.inference_zero_shot(tts_text, '', '', zero_shot_spk_id=spk_id, stream=False))
@@ -159,7 +161,7 @@ async def vllm_zero_shot(request: Request):
         execution_time = (time.time() - start_time) * 1000
         logging.info(f"vllm zero shot success, task_id: {task_id}, tts text: {tts_text}, execution time: {execution_time}")
         if is_sync:
-            upload_result = upload_local_file_to_nos(file_abs_path)
+            upload_result = upload_local_file_to_nos(file_abs_path, output_nos_endpoint, output_nos_bucket)
             return {
                 "status": "success",
                 "fileNos": upload_result['fileNos'],
