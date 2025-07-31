@@ -27,11 +27,33 @@ from services.status_callback import upload_local_file_to_nos, download_file_fro
 # 创建FastAPI应用实例
 app = FastAPI()
 
-cosyvoice = CosyVoice2('/home/workspace/CosyVoice/pretrained_models/CosyVoice2-0.5B', load_jit=True, load_trt=True, load_vllm=True, fp16=True)
-# cosyvoice = CosyVoice2('/home/workspace/CosyVoice/pretrained_models/CosyVoice2-0.5B', load_jit=False, load_trt=False, load_vllm=False, fp16=False)
-spk_emb_dict = torch.load('/home/workspace/CosyVoice/pretrained_models/CosyVoice2-0.5B/spk2embedding.pt', map_location='cpu')
-# prompt_speech_16k = load_wav('./asset/spk12649899906_00157.wav', 16000)
-prompt_speech_16k = load_wav('./asset/spk302346072_00060.wav', 16000)
+# 全局变量声明
+cosyvoice = None
+spk_emb_dict = None
+prompt_speech_16k = None
+
+def initialize_cosyvoice(use_vllm=True):
+    """初始化 CosyVoice2 实例"""
+    global cosyvoice, spk_emb_dict, prompt_speech_16k
+    
+    # 根据参数决定是否反转布尔值
+    load_jit = True
+    load_trt = True
+    load_vllm = True
+    fp16 = True
+    
+    if not use_vllm:
+        load_jit = not load_jit
+        load_trt = not load_trt
+        load_vllm = not load_vllm
+        fp16 = not fp16
+    
+    cosyvoice = CosyVoice2('/home/workspace/CosyVoice/pretrained_models/CosyVoice2-0.5B', 
+                          load_jit=load_jit, load_trt=load_trt, load_vllm=load_vllm, fp16=fp16)
+    spk_emb_dict = torch.load('/home/workspace/CosyVoice/pretrained_models/CosyVoice2-0.5B/spk2embedding.pt', map_location='cpu')
+    # prompt_speech_16k = load_wav('./asset/spk12649899906_00157.wav', 16000)
+    prompt_speech_16k = load_wav('./asset/spk302346072_00060.wav', 16000)
+    logging.info(f"initialize cosyvoice2 success, use_vllm: {use_vllm}")
 
 def async_task_callback(task_id, success, file_path, execution_time, port):
     try:
@@ -151,10 +173,14 @@ async def vllm_zero_shot(request: Request):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, help="服务端口", required=True)
+    parser.add_argument("--use-vllm", type=bool, default=True)
     args = parser.parse_args()
 
     # 保存端口到app.state，方便后续调用
     app.state.port = args.port
+
+    # 初始化 CosyVoice2 实例
+    initialize_cosyvoice(args.use_vllm)
 
     import uvicorn
     uvicorn.run(
