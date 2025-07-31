@@ -87,6 +87,8 @@ async def vllm_tts(request: Request):
     spk_id = data['speakerId']
     task_id = data['taskId']
     is_sync = data['isSync']
+    output_nos_endpoint = data['outputNosEndpoint']
+    output_nos_bucket = data['outputNosBucket']
     results = list(cosyvoice.inference_sft_peng(
         tts_text, spk_id, prompt_speech_16k, spk_emb_dict[spk_id], stream=False
     ))
@@ -102,7 +104,7 @@ async def vllm_tts(request: Request):
         execution_time = (time.time() - start_time) * 1000
         logging.info(f"vllm sft instruct success, task_id: {task_id}, tts text: {tts_text}, execution time: {execution_time}")
         if is_sync:
-            upload_result = upload_local_file_to_nos(file_abs_path)
+            upload_result = upload_local_file_to_nos(file_abs_path, output_nos_endpoint, output_nos_bucket)
             return {
                 "status": "success",
                 "fileNos": upload_result['fileNos'],
