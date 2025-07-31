@@ -181,7 +181,6 @@ if __name__ == "__main__":
     # 保存端口到app.state，方便后续调用
     app.state.port = args.port
 
-    logging.info(f"get use-llm: {args.no_vllm}")
     # 初始化 CosyVoice2 实例
     initialize_cosyvoice(args.no_vllm)
 
