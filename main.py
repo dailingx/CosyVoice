@@ -175,7 +175,7 @@ async def vllm_zero_shot(request: Request):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=8190, help="服务端口")
-    parser.add_argument("--use_vllm", type=bool, default=True)
+    parser.add_argument("--use_vllm", action="store_true", default=True, help="是否使用vLLM")
     args = parser.parse_args()
 
     # 保存端口到app.state，方便后续调用
