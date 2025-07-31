@@ -89,13 +89,14 @@ async def vllm_tts(request: Request):
     is_sync = data['isSync']
     output_nos_endpoint = data.get('outputNosEndpoint', None)
     output_nos_bucket = data.get('outputNosBucket', None)
+    output_file_format = data.get('outputFileFormat', "wav")
     results = list(cosyvoice.inference_sft_peng(
         tts_text, spk_id, prompt_speech_16k, spk_emb_dict[spk_id], stream=False
     ))
     if results:
         all_audio = torch.cat([j['tts_speech'] for j in results], dim=-1)
         output_dir = os.path.join(os.getcwd(), "output")
-        filename = f"sft_instruct_{spk_id}_{str(uuid.uuid4()).replace('-', '')}.wav"
+        filename = f"sft_instruct_{spk_id}_{str(uuid.uuid4()).replace('-', '')}.{output_file_format}"
         file_path = os.path.join(output_dir, filename)
         torchaudio.save(file_path, all_audio, cosyvoice.sample_rate)
         file_abs_path = os.path.abspath(file_path)
@@ -130,6 +131,7 @@ async def vllm_zero_shot(request: Request):
     is_sync = data['isSync']
     output_nos_endpoint = data.get('outputNosEndpoint', None)
     output_nos_bucket = data.get('outputNosBucket', None)
+    output_file_format = data.get('outputFileFormat', "wav")
     # 判断spk_id是否在spk2info中
     if spk_id in cosyvoice.frontend.spk2info:
         results = list(cosyvoice.inference_zero_shot(tts_text, '', '', zero_shot_spk_id=spk_id, stream=False))
@@ -152,7 +154,7 @@ async def vllm_zero_shot(request: Request):
     if results:
         all_audio = torch.cat([j['tts_speech'] for j in results], dim=-1)
         output_dir = os.path.join(os.getcwd(), "output")
-        filename = f"zero_shot_{spk_id}_{str(uuid.uuid4()).replace('-', '')}.wav"
+        filename = f"zero_shot_{spk_id}_{str(uuid.uuid4()).replace('-', '')}.{output_file_format}"
         file_path = os.path.join(output_dir, filename)
         torchaudio.save(file_path, all_audio, cosyvoice.sample_rate)
         file_abs_path = os.path.abspath(file_path)
