@@ -32,6 +32,7 @@ cosyvoice = None
 spk_emb_dict = None
 prompt_speech_16k = None
 
+
 def initialize_cosyvoice(use_vllm=True):
     """初始化 CosyVoice2 实例"""
     global cosyvoice, spk_emb_dict, prompt_speech_16k
@@ -54,6 +55,7 @@ def initialize_cosyvoice(use_vllm=True):
     # prompt_speech_16k = load_wav('./asset/spk12649899906_00157.wav', 16000)
     prompt_speech_16k = load_wav('./asset/spk302346072_00060.wav', 16000)
     logging.info(f"initialize cosyvoice2 success, use_vllm: {use_vllm}")
+
 
 def async_task_callback(task_id, success, file_path, execution_time, port):
     try:
@@ -179,6 +181,7 @@ if __name__ == "__main__":
     # 保存端口到app.state，方便后续调用
     app.state.port = args.port
 
+    logging.info(f"get use-llm: {args.use_vllm}")
     # 初始化 CosyVoice2 实例
     initialize_cosyvoice(args.use_vllm)
 
