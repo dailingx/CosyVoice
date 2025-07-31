@@ -172,7 +172,7 @@ async def vllm_zero_shot(request: Request):
 # 主函数，用来创建应用实例并运行
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--port", type=int, default=8190, help="服务端口", required=True)
+    parser.add_argument("--port", type=int, default=8190, help="服务端口")
     parser.add_argument("--use-vllm", type=bool, default=True)
     args = parser.parse_args()
 
