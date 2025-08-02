@@ -164,7 +164,7 @@ async def vllm_zero_shot(request: Request):
     if spk_id in cosyvoice.frontend.spk2info:
         results = list(cosyvoice.inference_zero_shot(tts_text, '', '', zero_shot_spk_id=spk_id, stream=False))
     else:
-        logging.info(f"spk_id {spk_id} 未缓存，将开启缓存")
+        logging.info(f"vllm zero shot: spk_id {spk_id} 未缓存，将添加到缓存")
         spk_prompt_speech_filename = spk_speech_nos.split('/')[-1]
         if '.' not in spk_prompt_speech_filename:
             spk_prompt_speech_filename += '.wav'
@@ -179,6 +179,7 @@ async def vllm_zero_shot(request: Request):
         cosyvoice.add_zero_shot_spk(spk_text, spk_prompt_speech_16k, spk_id)
         results = list(cosyvoice.inference_zero_shot(tts_text, '', '', zero_shot_spk_id=spk_id, stream=False))
         cosyvoice.save_spkinfo()
+        logging.info(f"vllm zero shot: spk_id {spk_id} 已添加到缓存")
     if results:
         all_audio = torch.cat([j['tts_speech'] for j in results], dim=-1)
         output_dir = os.path.join(os.getcwd(), "output")
