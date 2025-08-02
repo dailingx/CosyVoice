@@ -29,8 +29,15 @@ app = FastAPI()
 
 # 全局变量声明
 cosyvoice = None
-spk_emb_dict = None
-prompt_speech_16k = None
+spk_emb_dict = {}
+# 添加spk_id到prompt_speech_16k的缓存字典
+spk_prompt_cache = {}
+
+
+def init_spk_cache():
+    # prompt_speech_16k = load_wav('./asset/spk12649899906_00157.wav', 16000)
+    preheat_prompt_speech_16k = load_wav('./asset/spk302346072_00060.wav', 16000)
+    spk_prompt_cache['spk302346072'] = preheat_prompt_speech_16k
 
 
 def initialize_cosyvoice(no_vllm=False):
@@ -52,8 +59,7 @@ def initialize_cosyvoice(no_vllm=False):
     cosyvoice = CosyVoice2('/home/workspace/CosyVoice/pretrained_models/CosyVoice2-0.5B', 
                           load_jit=load_jit, load_trt=load_trt, load_vllm=load_vllm, fp16=fp16)
     spk_emb_dict = torch.load('/home/workspace/CosyVoice/pretrained_models/CosyVoice2-0.5B/spk2embedding.pt', map_location='cpu')
-    # prompt_speech_16k = load_wav('./asset/spk12649899906_00157.wav', 16000)
-    prompt_speech_16k = load_wav('./asset/spk302346072_00060.wav', 16000)
+    init_spk_cache()
     logging.info(f"initialize cosyvoice2 success, use_vllm: {not no_vllm}")
 
 
@@ -87,9 +93,31 @@ async def vllm_tts(request: Request):
     spk_id = data['speakerId']
     task_id = data['taskId']
     is_sync = data['isSync']
+    spk_speech_nos = data['speakerSpeechNosKey']
     output_nos_endpoint = data.get('outputNosEndpoint', None)
     output_nos_bucket = data.get('outputNosBucket', None)
     output_file_format = data.get('outputFileFormat', "wav")
+
+    # 检查spk_id是否在缓存中
+    if spk_id in spk_prompt_cache:
+        prompt_speech_16k = spk_prompt_cache[spk_id]
+    else:
+        logging.info(f"vllm tts: spk_id {spk_id} 未缓存，将下载并缓存prompt_speech_16k")
+        spk_prompt_speech_filename = spk_speech_nos.split('/')[-1]
+        if '.' not in spk_prompt_speech_filename:
+            spk_prompt_speech_filename += '.wav'
+        spk_prompt_speech_path = os.path.join('./asset', f"{spk_id}_{spk_prompt_speech_filename}")
+        download_success = download_file_from_nos(nos_key=spk_speech_nos, save_path=spk_prompt_speech_path)
+        if download_success is not True:
+            return {
+                "status": "fail",
+                "message": "download audio file from nos fail!"
+            }
+        prompt_speech_16k = load_wav(spk_prompt_speech_path, 16000)
+        # 将spk_id和对应的prompt_speech_16k添加到缓存中
+        spk_prompt_cache[spk_id] = prompt_speech_16k
+        logging.info(f"vllm tts: spk_id {spk_id} 已添加到缓存")
+    
     results = list(cosyvoice.inference_sft_peng(
         tts_text, spk_id, prompt_speech_16k, spk_emb_dict[spk_id], stream=False
     ))
