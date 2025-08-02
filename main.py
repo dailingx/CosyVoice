@@ -93,7 +93,7 @@ async def vllm_tts(request: Request):
     spk_id = data['speakerId']
     task_id = data['taskId']
     is_sync = data['isSync']
-    spk_speech_nos = data['speakerSpeechNosKey']
+    spk_speech_nos = data.get('speakerSpeechNosKey', None)
     output_nos_endpoint = data.get('outputNosEndpoint', None)
     output_nos_bucket = data.get('outputNosBucket', None)
     output_file_format = data.get('outputFileFormat', "wav")
