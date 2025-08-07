@@ -16,6 +16,7 @@ from cosyvoice.utils.file_utils import logging
 import argparse
 import os
 import time
+import re
 
 from pathlib import Path
 proxy_project_path = Path("/home/workspace/music-content-ai-generate-proxy")
@@ -63,6 +64,17 @@ def initialize_cosyvoice(no_vllm=False):
     logging.info(f"initialize cosyvoice2 success, use_vllm: {not no_vllm}")
 
 
+def preprocess_text_input(text):
+    text = text.strip()
+    text = re.sub(r'\s+', ' ', text)
+    text = re.sub(r'(?<=[\u4e00-\u9fff])\s+|\s+(?=[\u4e00-\u9fff])', '，', text)
+    text = re.sub(r'~+', '，', text)
+    text = re.sub(r'、+', '，', text)
+    text = re.sub(r'，+', '，', text)
+    text = re.sub(r'[，,、]+$', '。', text)
+    return text
+
+
 def async_task_callback(task_id, success, file_path, execution_time, port):
     try:
         status = "TASK_SUCCESS" if success else 'TASK_FAIL'
@@ -89,7 +101,7 @@ def async_task_callback(task_id, success, file_path, execution_time, port):
 async def vllm_tts(request: Request):
     start_time = time.time()
     data = await request.json()
-    tts_text = data['text']
+    tts_text = preprocess_text_input(data['text'])
     spk_id = data['speakerId']
     task_id = data['taskId']
     is_sync = data['isSync']
