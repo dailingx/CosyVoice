@@ -163,7 +163,7 @@ async def vllm_tts(request: Request):
 async def vllm_zero_shot(request: Request):
     start_time = time.time()
     data = await request.json()
-    tts_text = data['text']
+    tts_text = preprocess_text_input(data['text'])
     spk_id = data['speakerId']
     spk_speech_nos = data['speakerSpeechNosKey']
     spk_text = data['speakerText']
