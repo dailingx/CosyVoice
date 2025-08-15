@@ -89,7 +89,11 @@ class CosyVoice:
                 yield model_output
                 start_time = time.time()
 
-    def inference_zero_shot(self, tts_text, prompt_text, prompt_speech_16k, zero_shot_spk_id='', stream=False, speed=1.0, text_frontend=True):
+    def inference_zero_shot(self, tts_text, prompt_text, prompt_speech_16k, zero_shot_spk_id='', stream=False, speed=1.0, text_frontend=True, seed=None):
+        # 设置随机种子
+        if seed is not None:
+            from cosyvoice.utils.common import set_all_random_seed
+            set_all_random_seed(seed)
         prompt_text = self.frontend.text_normalize(prompt_text, split=False, text_frontend=text_frontend)
         for i in tqdm(self.frontend.text_normalize(tts_text, split=True, text_frontend=text_frontend)):
             if (not isinstance(i, Generator)) and len(i) < 0.5 * len(prompt_text):
@@ -194,8 +198,12 @@ class CosyVoice2(CosyVoice):
                 start_time = time.time()
 
     def inference_sft_peng(self, tts_text, spk_id, prompt_speech_16k, spk_emb, stream=False, speed=1.0,
-                           text_frontend=True):
+                           text_frontend=True, seed=None):
         assert isinstance(self.model, CosyVoice2Model), 'inference_sft_peng is only implemented for CosyVoice2!'
+        # 设置随机种子
+        if seed is not None:
+            from cosyvoice.utils.common import set_all_random_seed
+            set_all_random_seed(seed)
         for i in tqdm(self.frontend.text_normalize(tts_text, split=True, text_frontend=text_frontend)):
             model_input = self.frontend.frontend_sft_peng(i, spk_id, prompt_speech_16k, self.sample_rate, spk_emb)
             start_time = time.time()

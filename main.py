@@ -109,6 +109,7 @@ async def vllm_tts(request: Request):
     output_nos_endpoint = data.get('outputNosEndpoint', None)
     output_nos_bucket = data.get('outputNosBucket', None)
     output_file_format = data.get('outputFileFormat', "wav")
+    seed = data.get('seed', None)
 
     # 检查spk_id是否在缓存中
     if spk_id in spk_prompt_cache:
@@ -131,7 +132,7 @@ async def vllm_tts(request: Request):
         logging.info(f"vllm tts: spk_id {spk_id} 已添加到缓存")
     
     results = list(cosyvoice.inference_sft_peng(
-        tts_text, spk_id, prompt_speech_16k, spk_emb_dict[spk_id], stream=False
+        tts_text, spk_id, prompt_speech_16k, spk_emb_dict[spk_id], stream=False, seed=seed
     ))
     if results:
         all_audio = torch.cat([j['tts_speech'] for j in results], dim=-1)
@@ -172,6 +173,7 @@ async def vllm_zero_shot(request: Request):
     output_nos_endpoint = data.get('outputNosEndpoint', None)
     output_nos_bucket = data.get('outputNosBucket', None)
     output_file_format = data.get('outputFileFormat', "wav")
+    seed = data.get('seed', None)
     # 判断spk_id是否在spk2info中
     if spk_id in cosyvoice.frontend.spk2info:
         results = list(cosyvoice.inference_zero_shot(tts_text, '', '', zero_shot_spk_id=spk_id, stream=False))
@@ -189,7 +191,7 @@ async def vllm_zero_shot(request: Request):
             }
         spk_prompt_speech_16k = load_wav(spk_prompt_speech_path, 16000)
         cosyvoice.add_zero_shot_spk(spk_text, spk_prompt_speech_16k, spk_id)
-        results = list(cosyvoice.inference_zero_shot(tts_text, '', '', zero_shot_spk_id=spk_id, stream=False))
+        results = list(cosyvoice.inference_zero_shot(tts_text, '', '', zero_shot_spk_id=spk_id, stream=False, seed=seed))
         cosyvoice.save_spkinfo()
         logging.info(f"vllm zero shot: spk_id {spk_id} 已添加到缓存")
     if results:
