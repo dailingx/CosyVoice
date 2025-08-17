@@ -45,17 +45,17 @@ def initialize_cosyvoice(no_vllm=False, no_fp16=False, no_trt=False, no_jit=Fals
     """初始化 CosyVoice2 实例"""
     global cosyvoice, spk_emb_dict, prompt_speech_16k
     
-    # 根据参数决定是否反转布尔值
+    # 根据参数决定是否反转布尔值,默认开启全加速
     load_jit = not no_jit
     load_trt = not no_trt
     load_vllm = not no_vllm
     fp16 = not no_fp16
     
     if no_vllm:
-        load_jit = not load_jit
-        load_trt = not load_trt
-        load_vllm = not load_vllm
-        fp16 = not fp16
+        load_jit = False
+        load_trt = False
+        load_vllm = False
+        fp16 = False
     
     cosyvoice = CosyVoice2('/home/workspace/CosyVoice/pretrained_models/CosyVoice2-0.5B', 
                           load_jit=load_jit, load_trt=load_trt, load_vllm=load_vllm, fp16=fp16)
