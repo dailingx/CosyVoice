@@ -465,6 +465,8 @@ class Qwen2LM(TransformerLM):
     def inference_wrapper(self, lm_input, sampling, min_len, max_len, uuid):
         if hasattr(self, 'vllm'):
             from vllm import SamplingParams, RequestOutput
+            # delete
+            print("vllm SamplingParams in3")
             sampling_params = SamplingParams(top_k=sampling,
                                              stop_token_ids=self.stop_token_ids,
                                              min_tokens=min_len,
