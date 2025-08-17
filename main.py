@@ -228,7 +228,7 @@ if __name__ == "__main__":
     parser.add_argument("--no_fp16", action="store_true", help="不使用fp16")
     parser.add_argument("--no_trt", action="store_true", help="不使用trt")
     parser.add_argument("--no_jit", action="store_true", help="不使用jit")
-    parser.add_argument("--just_no_vllm", action="store_true", help="不使用vLLM")
+    parser.add_argument("--no_vllm", action="store_true", help="不使用vLLM")
     args = parser.parse_args()
 
     # 保存端口到app.state，方便后续调用
