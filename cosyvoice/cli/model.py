@@ -276,8 +276,8 @@ class CosyVoice2Model(CosyVoiceModel):
         from vllm import EngineArgs, LLMEngine
         engine_args = EngineArgs(model=model_dir,
                                  skip_tokenizer_init=True,
-                                 enable_prompt_embeds=True,
-                                 gpu_memory_utilization=0.2)
+                                 enable_prompt_embeds=False,
+                                 gpu_memory_utilization=0.5)
         self.llm.vllm = LLMEngine.from_engine_args(engine_args)
         self.llm.lock = threading.Lock()
         del self.llm.llm.model.model.layers
