@@ -96,7 +96,7 @@ def export_cosyvoice2_vllm(model, model_path, device):
     feature_size = model.speech_embedding.embedding_dim
     pad_vocab_size = ((vocab_size + pad_to - 1) // pad_to) * pad_to
 
-    dtype = torch.bfloat16
+    dtype = torch.float16
     # lm_head
     new_lm_head = torch.nn.Linear(in_features=feature_size, out_features=pad_vocab_size, bias=True)
     with torch.no_grad():
