@@ -103,6 +103,8 @@ class CosyVoiceModel:
     def llm_job(self, text, prompt_text, llm_prompt_speech_token, llm_embedding, uuid):
         with self.llm_context, torch.cuda.amp.autocast(self.fp16 is True and hasattr(self.llm, 'vllm') is False):
             if isinstance(text, Generator):
+                # delete
+                print("llm_job in1, ")
                 assert isinstance(self, CosyVoice2Model) and not hasattr(self.llm, 'vllm'), 'streaming input text is only implemented for CosyVoice2 and do not support vllm!'
                 for i in self.llm.inference_bistream(text=text,
                                                      prompt_text=prompt_text.to(self.device),
@@ -112,6 +114,8 @@ class CosyVoiceModel:
                                                      embedding=llm_embedding.to(self.device)):
                     self.tts_speech_token_dict[uuid].append(i)
             else:
+                # delete
+                print("llm_job in2, ")
                 for i in self.llm.inference(text=text.to(self.device),
                                             text_len=torch.tensor([text.shape[1]], dtype=torch.int32).to(self.device),
                                             prompt_text=prompt_text.to(self.device),

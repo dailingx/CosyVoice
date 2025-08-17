@@ -156,6 +156,8 @@ class CosyVoiceFrontEnd:
 
     def frontend_zero_shot(self, tts_text, prompt_text, prompt_speech_16k, resample_rate, zero_shot_spk_id):
         tts_text_token, tts_text_token_len = self._extract_text_token(tts_text)
+        # delete
+        print(f"frontend_zero_shot tts_text_token: {tts_text_token}, tts_text_token_len: {tts_text_token_len}")
         if zero_shot_spk_id == '':
             prompt_text_token, prompt_text_token_len = self._extract_text_token(prompt_text)
             prompt_speech_resample = torchaudio.transforms.Resample(orig_freq=16000, new_freq=resample_rate)(prompt_speech_16k)
