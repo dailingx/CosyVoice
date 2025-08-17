@@ -41,7 +41,7 @@ def init_spk_cache():
     spk_prompt_cache['spk302346072'] = preheat_prompt_speech_16k
 
 
-def initialize_cosyvoice(no_vllm=False, no_fp16=False, no_trt=False, no_jit=False):
+def initialize_cosyvoice(no_accelerate=False, no_fp16=False, no_trt=False, no_jit=False, no_vllm=False):
     """初始化 CosyVoice2 实例"""
     global cosyvoice, spk_emb_dict, prompt_speech_16k
     
@@ -51,7 +51,7 @@ def initialize_cosyvoice(no_vllm=False, no_fp16=False, no_trt=False, no_jit=Fals
     load_vllm = not no_vllm
     fp16 = not no_fp16
     
-    if no_vllm:
+    if no_accelerate:
         load_jit = False
         load_trt = False
         load_vllm = False
@@ -61,7 +61,7 @@ def initialize_cosyvoice(no_vllm=False, no_fp16=False, no_trt=False, no_jit=Fals
                           load_jit=load_jit, load_trt=load_trt, load_vllm=load_vllm, fp16=fp16)
     spk_emb_dict = torch.load('/home/workspace/CosyVoice/pretrained_models/CosyVoice2-0.5B/spk2embedding.pt', map_location='cpu')
     init_spk_cache()
-    logging.info(f"initialize cosyvoice2 success, use_vllm: {not no_vllm}, load_jit: {load_jit}, load_trt: {load_trt}, load_vllm: {load_vllm}, fp16: {fp16}")
+    logging.info(f"initialize cosyvoice2 success, all_accelerate: {not no_accelerate}, load_jit: {load_jit}, load_trt: {load_trt}, load_vllm: {load_vllm}, fp16: {fp16}")
 
 
 def preprocess_text_input(text):
@@ -224,17 +224,18 @@ async def vllm_zero_shot(request: Request):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=8190, help="服务端口")
-    parser.add_argument("--no_vllm", action="store_true", help="不使用vLLM")
+    parser.add_argument("--no_accelerate", action="store_true", help="不开启加速")
     parser.add_argument("--no_fp16", action="store_true", help="不使用fp16")
     parser.add_argument("--no_trt", action="store_true", help="不使用trt")
     parser.add_argument("--no_jit", action="store_true", help="不使用jit")
+    parser.add_argument("--just_no_vllm", action="store_true", help="不使用vLLM")
     args = parser.parse_args()
 
     # 保存端口到app.state，方便后续调用
     app.state.port = args.port
 
     # 初始化 CosyVoice2 实例
-    initialize_cosyvoice(args.no_vllm, args.no_fp16, args.no_trt, args.no_jit)
+    initialize_cosyvoice(args.no_accelerate, args.no_fp16, args.no_trt, args.no_jit, args.no_vllm)
 
     import uvicorn
     uvicorn.run(
