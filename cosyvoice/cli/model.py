@@ -283,7 +283,7 @@ class CosyVoice2Model(CosyVoiceModel):
                                  skip_tokenizer_init=True,
                                  enable_prompt_embeds=True,
                                  gpu_memory_utilization=0.5,
-                                 dtype="float16")
+                                 trust_remote_code=True)
         self.llm.vllm = LLMEngine.from_engine_args(engine_args)
         self.llm.lock = threading.Lock()
         del self.llm.llm.model.model.layers
