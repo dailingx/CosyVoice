@@ -134,6 +134,8 @@ async def vllm_tts(request: Request):
     spk_emb = None
     if spk_id == "spk302346072":
         spk_emb = spk_emb_dict[spk_id]
+    else:
+        spk_id = spk_id.split('_')[0]
     results = list(cosyvoice.inference_sft_peng(
         tts_text, spk_id, prompt_speech_16k, spk_emb, stream=False, seed=seed
     ))
