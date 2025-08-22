@@ -130,9 +130,12 @@ async def vllm_tts(request: Request):
         # 将spk_id和对应的prompt_speech_16k添加到缓存中
         spk_prompt_cache[spk_id] = prompt_speech_16k
         logging.info(f"vllm tts: spk_id {spk_id} 已添加到缓存")
-    
+
+    spk_emb = None
+    if spk_id == "spk302346072":
+        spk_emb = spk_emb_dict[spk_id]
     results = list(cosyvoice.inference_sft_peng(
-        tts_text, spk_id, prompt_speech_16k, spk_emb_dict[spk_id], stream=False, seed=seed
+        tts_text, spk_id, prompt_speech_16k, spk_emb, stream=False, seed=seed
     ))
     if results:
         all_audio = torch.cat([j['tts_speech'] for j in results], dim=-1)

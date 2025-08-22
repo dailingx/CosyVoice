@@ -216,19 +216,23 @@ class CosyVoiceFrontEnd:
                        'flow_embedding': embedding}
         return model_input
 
-    def frontend_sft_peng(self, tts_text, spk_id, prompt_speech_16k, resample_rate, spk_emb):
-        model_input = self.frontend_zero_shot(tts_text, spk_id + '<|endofprompt|>', prompt_speech_16k, resample_rate,
-                                              '')
+    def frontend_sft_peng(self, tts_text, spk_id, prompt_speech_16k, resample_rate, spk_emb=None):
+        model_input = self.frontend_zero_shot(tts_text, spk_id + '<|endofprompt|>', prompt_speech_16k, resample_rate, '')
         del model_input['llm_prompt_speech_token']
         del model_input['llm_prompt_speech_token_len']
+
+
 
         # del model_input['flow_prompt_speech_token']
         # del model_input['flow_prompt_speech_token_len']
         # del model_input['prompt_speech_feat']
         # del model_input['prompt_speech_feat_len']
 
-        spk_emb = torch.tensor([spk_emb]).to(self.device)
-        model_input['flow_embedding'] = spk_emb
-        model_input['llm_embedding'] = spk_emb
+
+        if spk_emb is not None:
+            spk_emb = torch.tensor([spk_emb]).to(self.device)
+            model_input['flow_embedding'] = spk_emb
+            model_input['llm_embedding'] = spk_emb
+
 
         return model_input

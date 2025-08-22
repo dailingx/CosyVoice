@@ -197,7 +197,7 @@ class CosyVoice2(CosyVoice):
                 yield model_output
                 start_time = time.time()
 
-    def inference_sft_peng(self, tts_text, spk_id, prompt_speech_16k, spk_emb, stream=False, speed=1.0,
+    def inference_sft_peng(self, tts_text, spk_id, prompt_speech_16k, spk_emb=None, stream=False, speed=1.0,
                            text_frontend=True, seed=None):
         assert isinstance(self.model, CosyVoice2Model), 'inference_sft_peng is only implemented for CosyVoice2!'
         # 设置随机种子
