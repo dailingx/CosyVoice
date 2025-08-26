@@ -110,6 +110,7 @@ async def vllm_tts(request: Request):
     output_nos_bucket = data.get('outputNosBucket', None)
     output_file_format = data.get('outputFileFormat', "wav")
     seed = data.get('seed', None)
+    use_spk_emb = data.get('useSpkEmb', False)
 
     # 检查spk_id是否在缓存中
     if spk_id in spk_prompt_cache:
@@ -132,7 +133,7 @@ async def vllm_tts(request: Request):
         logging.info(f"vllm tts: spk_id {spk_id} 已添加到缓存")
 
     spk_emb = None
-    if spk_id == "spk302346072":
+    if use_spk_emb:
         spk_emb = spk_emb_dict[spk_id]
     else:
         spk_id = spk_id.split('_')[0]
