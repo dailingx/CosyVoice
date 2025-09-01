@@ -133,7 +133,7 @@ async def vllm_tts(request: Request):
         logging.info(f"vllm tts: spk_id {spk_id} 已添加到缓存")
 
     spk_emb = None
-    if use_spk_emb:
+    if use_spk_emb or spk_id == "spk302346072":
         spk_emb = spk_emb_dict[spk_id]
     else:
         spk_id = spk_id.split('_')[0]
