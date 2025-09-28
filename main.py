@@ -33,6 +33,8 @@ cosyvoice = None
 spk_emb_dict = {}
 # 添加spk_id到prompt_speech_16k的缓存字典
 spk_prompt_cache = {}
+# zeroshot用的缓存
+spk_prompt_cache_zeroshot = {}
 
 
 def init_spk_cache():
@@ -111,12 +113,13 @@ async def vllm_tts(request: Request):
     output_file_format = data.get('outputFileFormat', "wav")
     seed = data.get('seed', None)
     use_spk_emb = data.get('useSpkEmb', False)
+    use_spk_cache = data.get('useSpeakerCache', True)
 
     # 检查spk_id是否在缓存中
-    if spk_id in spk_prompt_cache:
+    if use_spk_cache is True and spk_id in spk_prompt_cache:
         prompt_speech_16k = spk_prompt_cache[spk_id]
     else:
-        logging.info(f"vllm tts: spk_id {spk_id} 未缓存，将下载并缓存prompt_speech_16k")
+        logging.info(f"vllm tts: spk_id {spk_id} 未缓存，将下载prompt_speech_16k，是否缓存spk：{use_spk_cache}")
         spk_prompt_speech_filename = spk_speech_nos.split('/')[-1]
         if '.' not in spk_prompt_speech_filename:
             spk_prompt_speech_filename += '.wav'
@@ -128,9 +131,10 @@ async def vllm_tts(request: Request):
                 "message": "download audio file from nos fail!"
             }
         prompt_speech_16k = load_wav(spk_prompt_speech_path, 16000)
-        # 将spk_id和对应的prompt_speech_16k添加到缓存中
-        spk_prompt_cache[spk_id] = prompt_speech_16k
-        logging.info(f"vllm tts: spk_id {spk_id} 已添加到缓存")
+        if use_spk_cache:
+            # 将spk_id和对应的prompt_speech_16k添加到缓存中
+            spk_prompt_cache[spk_id] = prompt_speech_16k
+            logging.info(f"vllm tts: spk_id {spk_id} 已添加到缓存")
 
     spk_emb = None
     if use_spk_emb or spk_id == "spk302346072":
@@ -180,11 +184,21 @@ async def vllm_zero_shot(request: Request):
     output_nos_bucket = data.get('outputNosBucket', None)
     output_file_format = data.get('outputFileFormat', "wav")
     seed = data.get('seed', None)
-    # 判断spk_id是否在spk2info中
-    if spk_id in cosyvoice.frontend.spk2info:
-        results = list(cosyvoice.inference_zero_shot(tts_text, '', '', zero_shot_spk_id=spk_id, stream=False))
+    spk_prompt_ratio = data.get('speakerPromptRatio', 1.0)
+    spk_speech_nos_2 = data.get('speakerSpeechNosKey2', None)
+    use_spk_cache = data.get('useSpeakerCache', True)
+    # 判断spk_id是否被缓存了
+    if use_spk_cache and spk_id in spk_prompt_cache_zeroshot:
+        spk_prompt = spk_prompt_cache_zeroshot[spk_id]
+        results = list(cosyvoice.inference_zero_shot_mix_timbre(
+            tts_text=tts_text,
+            prompt_text_1=spk_prompt['prompt_text_1'],
+            prompt_speech_16k_1=spk_prompt['prompt_speech_16k_1'],
+            prompt_ratio_1=spk_prompt.get('prompt_ratio_1', 1.0),
+            prompt_speech_16k_2=spk_prompt.get('prompt_speech_16k_2', None),
+            seed=seed))
     else:
-        logging.info(f"vllm zero shot: spk_id {spk_id} 未缓存，将添加到缓存")
+        logging.info(f"vllm zero shot: spk_id {spk_id} 未缓存，是否添加到缓存: {use_spk_cache}")
         spk_prompt_speech_filename = spk_speech_nos.split('/')[-1]
         if '.' not in spk_prompt_speech_filename:
             spk_prompt_speech_filename += '.wav'
@@ -196,10 +210,36 @@ async def vllm_zero_shot(request: Request):
                 "message": "download audio file from nos fail!"
             }
         spk_prompt_speech_16k = load_wav(spk_prompt_speech_path, 16000)
-        cosyvoice.add_zero_shot_spk(spk_text, spk_prompt_speech_16k, spk_id)
-        results = list(cosyvoice.inference_zero_shot(tts_text, '', '', zero_shot_spk_id=spk_id, stream=False, seed=seed))
-        cosyvoice.save_spkinfo()
-        logging.info(f"vllm zero shot: spk_id {spk_id} 已添加到缓存")
+        spk_prompt_speech_16k_2 = None
+        if spk_speech_nos_2 is not None and spk_speech_nos_2 != "":
+            # 传了第2段参考音频
+            spk_prompt_speech_filename_2 = spk_speech_nos_2.split('/')[-1]
+            if '.' not in spk_prompt_speech_filename_2:
+                spk_prompt_speech_filename_2 += '.wav'
+            spk_prompt_speech_path_2 = os.path.join('./asset', f"{spk_id}_2_{spk_prompt_speech_filename_2}")
+            download_success_2 = download_file_from_nos(nos_key=spk_speech_nos_2, save_path=spk_prompt_speech_path_2)
+            if download_success_2 is not True:
+                return {
+                    "status": "fail",
+                    "message": "download audio2 file from nos fail!"
+                }
+            spk_prompt_speech_16k_2 = load_wav(spk_prompt_speech_path_2, 16000)
+        if use_spk_cache and spk_id is not None and spk_id != "":
+            # 临时型音色克隆，或没有spk_id，则不走这里的保存
+            spk_prompt_cache_zeroshot[spk_id] = {
+                'prompt_text_1': spk_text,
+                'prompt_speech_16k_1': spk_prompt_speech_16k,
+                'prompt_ratio_1': spk_prompt_ratio,
+                'prompt_speech_16k_2': spk_prompt_speech_16k_2
+            }
+            logging.info(f"vllm zero shot: spk_id {spk_id} 已添加到缓存, prompt_text_1: {spk_text}, prompt_ratio_1: {spk_prompt_ratio}")
+        results = list(cosyvoice.inference_zero_shot_mix_timbre(
+            tts_text=tts_text,
+            prompt_text_1=spk_text,
+            prompt_speech_16k_1=spk_prompt_speech_16k,
+            prompt_ratio_1=spk_prompt_ratio,
+            prompt_speech_16k_2=spk_prompt_speech_16k_2,
+            seed=seed))
     if results:
         all_audio = torch.cat([j['tts_speech'] for j in results], dim=-1)
         output_dir = os.path.join(os.getcwd(), "output")

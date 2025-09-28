@@ -213,3 +213,37 @@ class CosyVoice2(CosyVoice):
                 logging.info('yield speech len {}, rtf {}'.format(speech_len, (time.time() - start_time) / speech_len))
                 yield model_output
                 start_time = time.time()
+
+    def inference_zero_shot_mix_timbre(self, tts_text, prompt_text_1, prompt_speech_16k_1, prompt_ratio_1=0.5,
+                                       prompt_speech_16k_2=None, zero_shot_spk_id='', stream=False, speed=1.0,
+                                       text_frontend=True, seed=None):
+        if seed is not None:
+            from cosyvoice.utils.common import set_all_random_seed
+            set_all_random_seed(seed)
+
+        prompt_text = prompt_text_1
+        prompt_text = self.frontend.text_normalize(prompt_text, split=False, text_frontend=text_frontend)
+        for i in tqdm(self.frontend.text_normalize(tts_text, split=True, text_frontend=text_frontend)):
+            if (not isinstance(i, Generator)) and len(i) < 0.5 * len(prompt_text):
+                logging.warning(
+                    'synthesis text {} too short than prompt text {}, this may lead to bad performance'.format(i,
+                                                                                                               prompt_text))
+            model_input = self.frontend.frontend_zero_shot(i, prompt_text, prompt_speech_16k_1, self.sample_rate,
+                                                           zero_shot_spk_id)
+
+            if prompt_speech_16k_2 is not None:
+                del model_input['flow_prompt_speech_token']
+                del model_input['flow_prompt_speech_token_len']
+                del model_input['prompt_speech_feat']
+                del model_input['prompt_speech_feat_len']
+
+                model_input['flow_embedding'] = prompt_ratio_1 * model_input['flow_embedding'] + (
+                            1 - prompt_ratio_1) * self.frontend._extract_spk_embedding(prompt_speech_16k_2)
+
+            start_time = time.time()
+            logging.info('synthesis text {}'.format(i))
+            for model_output in self.model.tts(**model_input, stream=stream, speed=speed):
+                speech_len = model_output['tts_speech'].shape[1] / self.sample_rate
+                logging.info('yield speech len {}, rtf {}'.format(speech_len, (time.time() - start_time) / speech_len))
+                yield model_output
+                start_time = time.time()
