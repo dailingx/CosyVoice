@@ -114,8 +114,6 @@ class CosyVoiceModel:
                                                      embedding=llm_embedding.to(self.device)):
                     self.tts_speech_token_dict[uuid].append(i)
             else:
-                # delete
-                print("llm_job in2, ")
                 for i in self.llm.inference(text=text.to(self.device),
                                             text_len=torch.tensor([text.shape[1]], dtype=torch.int32).to(self.device),
                                             prompt_text=prompt_text.to(self.device),
